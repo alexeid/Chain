@@ -5,44 +5,26 @@ import static java.lang.Math.*;
 /**
  * Created by adru001 on 25/09/14.
  */
-public abstract class NumberTrace {
+public interface NumberTrace extends Trace {
 
-    private String name;
-    private int stepSize;
+    public void sortIndex();
 
-    public NumberTrace(String name, int stepSize) {
-        this.name = name;
-        this.stepSize = stepSize;
-    }
+    public double doubleValue(int i);
 
-    public abstract void sortIndex();
+    public double getAscending(int i);
 
-    public abstract double doubleValue(int i);
-
-    public abstract int size();
-
-    public abstract double getAscending(int i);
-
-    public final int getStepSize() {
-        return stepSize;
-    }
-
-    public final String getName() {
-        return name;
-    }
-
-    public final double mean() {
+    default double mean() {
         double m = 0.0;
-        int count = size();
+        int count = nrow();
         for (int i = 0; i < count; i++) {
             m += doubleValue(i);
         }
         return m / (double) count;
     }
 
-    public final double geometricMean() {
+    default double geometricMean() {
         double gm = 0;
-        int count = size();
+        int count = nrow();
         for (int i = 0; i < count; i++) {
             gm += Math.log(doubleValue(i));
         }
@@ -56,9 +38,9 @@ public abstract class NumberTrace {
      * @param q quantile (0 < q <= 1)
      * @return q-th quantile
      */
-    public final double quantile(double q) {
+    default double quantile(double q) {
         if (q <= 0.0 || q > 1.0) throw new IllegalArgumentException("Quantile out of range");
-        return getAscending((int) Math.ceil(q * size()) - 1);
+        return getAscending((int) Math.ceil(q * nrow()) - 1);
     }
 
     /**
@@ -66,38 +48,26 @@ public abstract class NumberTrace {
      *
      * @return median
      */
-    public final double median() {
-        int pos = size() / 2;
-        if (size() % 2 == 1) {
+    default double median() {
+        int pos = nrow() / 2;
+        if (nrow() % 2 == 1) {
             return getAscending(pos);
         } else {
             return (getAscending(pos-1) + getAscending(pos)) / 2.0;
         }
     }
 
-    public final double min() {
+    default double min() {
         return getAscending(0);
     }
 
-    public final double max() {
-        return getAscending(size() - 1);
+    default double max() {
+        return getAscending(nrow() - 1);
     }
 
-    public double ESS() {
-        return ESS;
-    }
+    default CorrelationStatistics computeCorrelationStatistics() {
 
-    public double ACT() {
-        return ACT;
-    }
-
-    public double stdErrorOfMean() {
-        return stdErrorOfMean;
-    }
-
-    public void computeCorrelationStatistics() {
-
-        final int samples = size();
+        final int samples = nrow();
         int maxLag = samples - 1;
 
         double[] gammaStat = new double[maxLag];
@@ -127,14 +97,19 @@ public abstract class NumberTrace {
             }
         }
 
-        stdErrorOfMean = Math.sqrt(varStat / samples);
-        ACT = stepSize * varStat / gammaStat[0];
-        ESS = (stepSize * samples) / ACT;
-        stdErrOfACT = (2.0 * Math.sqrt(2.0 * (2.0 * (double) (maxLag + 1)) / samples) * (varStat / gammaStat[0]) * stepSize);
+        CorrelationStatistics cs = new CorrelationStatistics();
+        cs.stdErrorOfMean = Math.sqrt(varStat / samples);
+        cs.ACT = getStepSize() * varStat / gammaStat[0];
+        cs.ESS = (getStepSize() * samples) / cs.ACT;
+        cs.stdErrOfACT = (2.0 * Math.sqrt(2.0 * (2.0 * (double) (maxLag + 1)) / samples) * (varStat / gammaStat[0]) * getStepSize());
+        return cs;
     }
 
-    private double stdErrorOfMean;   // standard error of mean
-    private double ACT;              // auto correlation time
-    private double ESS;              // effective sample size
-    private double stdErrOfACT;      // standard deviation of autocorrelation time
+
+    class CorrelationStatistics {
+        double stdErrorOfMean;   // standard error of mean
+        double ACT;              // auto correlation time
+        double ESS;              // effective sample size
+        double stdErrOfACT;      // standard deviation of autocorrelation time
+    }
 }

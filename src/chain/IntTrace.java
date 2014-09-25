@@ -1,37 +1,58 @@
 package chain;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
 
 /**
  * Created by adru001 on 25/09/14.
  */
-public class IntTrace extends NumberTrace {
+public class IntTrace extends IntArrayList implements NumberTrace {
 
-    int[] val;
     int[] sortIndex;
+    int stepSize;
+    String name;
 
-    public IntTrace(String name, int stepSize, int size) {
-        super(name, stepSize);
-        val = new int[size];
+    public IntTrace(int size) {
+        super(size);
     }
 
     /**
      * Produce a sort index, for calculating median, quantiles et cetera
      */
     public void sortIndex() {
-        sortIndex = IndirectSort.mergesort(0, val.length, new IndirectComparator.AscendingIntComparator(val));
+        sortIndex = IndirectSort.mergesort(0, size(), new IndirectComparator.AscendingIntComparator(buffer));
     }
 
-    public final int size() {
-        return val.length;
+    @Override
+    public int getStepSize() {
+        return stepSize;
+    }
+
+    @Override
+    public void setStepSize(int stepSize) {
+        this.stepSize = stepSize;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void setName(String name) {
+        this.name = name;
     }
 
     public final double getAscending(int i) {
-        return val[sortIndex[i]];
+        return (double)buffer[sortIndex[i]];
     }
 
     public double doubleValue(int i) {
-        return (double)val[i];
+        return (double)buffer[i];
+    }
+
+    public int nrow() {
+        return size();
     }
 }
