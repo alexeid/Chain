@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.*;
 
 /**
+ * Partially based on beast.utils.LogAnalyzer by Remco Bouckaert
+ *
  * @author Alexei Drummond
  */
 public class TraceUtils {
@@ -44,6 +46,7 @@ public class TraceUtils {
         traces = new Trace[traceCount];
         int traceSize = nData - nBurnIn;
 
+        // use first 100 lines to autodetect the column types
         int autodetect = Math.min(traceSize, 100);
         for (int i = 0; i < traceCount; i++) {
             traces[i] = new NominalTrace(autodetect);
@@ -129,5 +132,4 @@ public class TraceUtils {
         }
 
     }
-
 }
